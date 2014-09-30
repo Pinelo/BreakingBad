@@ -8,6 +8,9 @@
  * @author Hugo Gonzalez
  *
  */
+package breakingBad;
+
+
 import javax.swing.ImageIcon;
 import java.awt.Image;
 import java.awt.Rectangle;

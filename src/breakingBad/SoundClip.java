@@ -2,6 +2,9 @@
  * Clase SoundClip
  *
  */
+package breakingBad;
+
+
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.AudioInputStream;

@@ -8,13 +8,16 @@
  *
  * @author Casa
  */
-public class main {
 
-    /**
-     * @param args the command line arguments
-     */
+package breakingBad;
+
+import javax.swing.JFrame;
+
+public class main {
     public static void main(String[] args) {
-        // TODO code application logic here
+        Juego jueJuego = new Juego();
+        jueJuego.setVisible(true);
+        jueJuego.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
     
 }

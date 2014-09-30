@@ -4,16 +4,17 @@
  * and open the template in the editor.
  */
 
-package examenjframe;
+package breakingBad;
 
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Image;
-import java.awt.event.KeyListener;
-import java.util.LinkedList;
-import javax.swing.JFrame;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.net.URL;
+import java.util.LinkedList;
+import javax.swing.JFrame;
 
 /**
  *
@@ -29,10 +30,8 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
     
     /* objetos para manejar el buffer del Applet y este no parpadee */
     private Image    imaImagenApplet;   // Imagen a proyectar en Applet	
-    private Image    imaImagenProyectil; //la imagen para el proyectil
     private Graphics graGraficaApplet;  // Objeto grafico de la Imagen
     private Entidad entBarra;          //Se crea la barra
-    private int dirNena;                //direccion de Nena;
     private LinkedList encBloques;  //lista de bloques
     private Entidad entBloque;     //objeto para obtener bloques indiviualmente
     private Entidad entProyectil;   //objeto para el proyectil
@@ -56,8 +55,12 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
         //por defecto score empieza en 0
         iScore =0;
         
+        //proyectil empieza moviendose a la derecha y arriba
+        dirProyectilX = true;
+        dirProyectilY = true;
+        
         //la tecla spacebar no esta presionada
-        spacebar = false;
+        spacePress = false;
 
         //se crea sonido de impacto con bloque
         aucSonidoBloque = new SoundClip("wooho.wav");
@@ -67,11 +70,10 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
         
         
         // se crea imagen de la barra
-        Image imaImagenBarra = Toolkit.getDefaultToolkit().getImage("nena.gif");
-        
+        URL urlImagenBarra = this.getClass().getResource("nena.gif");
         // se crea la barra
 	entBarra = new Entidad(getWidth() / 2, getHeight(),
-                imaImagenNena);
+                Toolkit.getDefaultToolkit().getImage(urlImagenBarra));
         entBarra.setY(getHeight()-entBarra.getAlto());
         entBarra.setX(getWidth()/2-entBarra.getAncho());
 
@@ -80,7 +82,7 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
         
         //
         // se obtiene la imagen para los bloques    
-	Image imaImagenBloque = Toolkit.getDefaultToolkit().getImage("alien1Camina.gif");
+        URL urlImagenBloque = this.getClass().getResource("alien1Camina.gif");
 
         // se crea el arreglo de bloques
         encBloques = new LinkedList();
@@ -89,7 +91,7 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
             cantbloques -=1;
             int posX = 1;    
             int posY = 1;
-            entBloque = new Entidad(posX,posY,imaImagenBloque);
+            entBloque = new Entidad(posX,posY,Toolkit.getDefaultToolkit().getImage(urlImagenBloque));
             //cada caminador tiene una velocidad al azar
 
             /*
@@ -97,19 +99,19 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
                 esto va a cambiar despues.
             */
             entBloque.setX(cantbloques*entBloque.getAncho());
-            entBloque.setY(300);
+            entBloque.setY(0);
             encBloques.add(entBloque);
         }
         //
         
         // se obtiene la imagen para el proyectil    
-	Image imaImagenProyectil = Toolkit.getDefaultToolkit().getImage("alien2Corre.gif");
+        URL urlImagenProyectil = this.getClass().getResource("alien2Corre.gif");
     // se establece la posicion inicial, su velocidad y se crea el objeto
     int posX = entBarra.getX();
     int posY = entBarra.getY();
-    entProyectil = new Entidad(posX, posY, imaImagenProyectil);
+    entProyectil = new Entidad(posX, posY, Toolkit.getDefaultToolkit().getImage(urlImagenProyectil));
     entProyectil.setY(entProyectil.getY() - entProyectil.getAlto());
-    entProyectil.setVelocidad(4);
+    entProyectil.setVelocidad(1);
     //se establece la posicion del proyectil
         
         //se agrega keylistener para poder detectar el teclado
@@ -196,11 +198,11 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
         //no se puede salir el proyectil
         //se cambia la direccion si se sale del margen
         if (entProyectil.getX()<=0 || entProyectil.getX() + entProyectil.getAncho() > getWidth()) {
-            dirProyectilX != dirProyectilX;
+            dirProyectilX = !dirProyectilX;
         }
 
         if (entProyectil.getY()<=0 || entProyectil.getY() + entProyectil.getAlto() > getHeight()) {
-            dirProyectilY != dirProyectilY;
+            dirProyectilY = !dirProyectilY;
         }
 
         //si Bloque choca con Nena se aumenta el score
@@ -209,7 +211,10 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
                 if(entProyectil.colisiona(Bloque)) {
                     iScore++;   //se aumenta el score
                     //se reposiciona al Bloque
-                    encBloques.remove(Bloque);   //se elimina el bloque con el que se colisiono                    
+                    Bloque.setX(-400);
+                    dirProyectilX = !dirProyectilX;
+                    dirProyectilY = !dirProyectilY;
+                    //encBloques.remove(Bloque);   //se elimina el bloque con el que se colisiono                    
                     aucSonidoBloque.play();      //emite sonido
                 }
         }
@@ -229,7 +234,7 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
         }
     }
     
-    public void paint(Graphics graGrafico){
+    public void paint (Graphics graGrafico){
         // Inicializan el DoubleBuffer
         if (imaImagenApplet == null){
                 imaImagenApplet = createImage (this.getSize().width, 
@@ -239,13 +244,11 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
         
         
         //crea imagen para el background
+        URL urlImagenFondo;
         Image imaImagenFondo;
-        if(iVidas>0){
-            imaImagenFondo = Toolkit.getDefaultToolkit().getImage("espacio.jpg");
-        }
-        else{   //imagen de game over cuando se pierde el juego
-            imaImagenFondo = Toolkit.getDefaultToolkit().getImage("gameOver.jpg");
-        }
+        urlImagenFondo = this.getClass().getResource("espacio.jpg");
+        imaImagenFondo = Toolkit.getDefaultToolkit().getImage(urlImagenFondo);
+
         //despliega la imagen
         graGraficaApplet.drawImage(imaImagenFondo, 0, 0, 
                 getWidth(), getHeight(), this);
@@ -259,6 +262,7 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
         
         
     }
+
     
     
     public void paintAux(Graphics g) {
@@ -284,7 +288,6 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
 
     @Override
     public void keyTyped(KeyEvent e) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     
 }
