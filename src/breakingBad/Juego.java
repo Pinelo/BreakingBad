@@ -29,14 +29,20 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
     
     /* objetos para manejar el buffer del Applet y este no parpadee */
     private Image    imaImagenApplet;   // Imagen a proyectar en Applet	
+    private Image    imaImagenProyectil; //la imagen para el proyectil
     private Graphics graGraficaApplet;  // Objeto grafico de la Imagen
     private Entidad entBarra;          //Se crea la barra
     private int dirNena;                //direccion de Nena;
     private LinkedList encBloques;  //lista de bloques
     private Entidad entBloque;     //objeto para obtener bloques indiviualmente
+    private Entidad entProyectil;   //objeto para el proyectil
     private int iScore;                 //score del juego
     private SoundClip aucSonidoBloque; //sonido de impacto con bloque
     private SoundClip aucSonidoSuelo;  //sonido de impacto con suelo
+    private Boolean spacePress;     //booleano indicativo de la tecla spacebar
+    private Boolean dirProyectilY;   //indica si el proyectil sube o baja
+    private Boolean dirProyectilX;   //indica si el proyectil se mueve a la derecha o izq
+
     
      public Juego() {
         init();
@@ -50,6 +56,9 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
         //por defecto score empieza en 0
         iScore =0;
         
+        //la tecla spacebar no esta presionada
+        spacebar = false;
+
         //se crea sonido de impacto con bloque
         aucSonidoBloque = new SoundClip("wooho.wav");
         
@@ -66,40 +75,42 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
         entBarra.setY(getHeight()-entBarra.getAlto());
         entBarra.setX(getWidth()/2-entBarra.getAncho());
 
-         //velocidad de nena es 3
+         //velocidad de barra es 3
         entBarra.setVelocidad(3);
         
         //
         // se obtiene la imagen para los bloques    
 	Image imaImagenBloque = Toolkit.getDefaultToolkit().getImage("alien1Camina.gif");
 
-        // se crea el arreglo de bloques con 8-10 bloques
+        // se crea el arreglo de bloques
         encBloques = new LinkedList();
         int cantbloques = 20;
         while(cantbloques != 0) {
             cantbloques -=1;
-            int posX = (int) (Math.random() *(0 + 600) - 600);    
-            int posY = (int) (Math.random() *(getHeight()));
+            int posX = 1;    
+            int posY = 1;
             entBloque = new Entidad(posX,posY,imaImagenBloque);
             //cada caminador tiene una velocidad al azar
-            entBloque.setVelocidad((int) (Math.random() * (5 -3) + 3));
+
+            /*
+                PosX y PosY dependen del tama;o del sprite, 
+                esto va a cambiar despues.
+            */
+            entBloque.setX(cantbloques*entBloque.getAncho());
+            entBloque.setY(300);
             encBloques.add(entBloque);
         }
         //
         
-        // se obtiene la imagen para los corredores    
-	Image imaImagenCorredor = Toolkit.getDefaultToolkit().getImage("alien2Corre.gif");
-
-        // se crea el arreglo de corredores con 10-15 corredores
-        encCorredores = new LinkedList();
-        int cantCorredores = (int) (Math.random() * (15 - 10) + 10);
-        while(cantCorredores != 0) {
-            cantCorredores -=1;
-            int posX = (int) (Math.random() *(getWidth()));    
-            int posY = (int) (Math.random() *(0 + 1000) - 1000);
-            perCorredor = new Entidad(posX,posY,imaImagenCorredor);
-            encCorredores.add(perCorredor);
-        }
+        // se obtiene la imagen para el proyectil    
+	Image imaImagenProyectil = Toolkit.getDefaultToolkit().getImage("alien2Corre.gif");
+    // se establece la posicion inicial, su velocidad y se crea el objeto
+    int posX = entBarra.getX();
+    int posY = entBarra.getY();
+    entProyectil = new Entidad(posX, posY, imaImagenProyectil);
+    entProyectil.setY(entProyectil.getY() - entProyectil.getAlto());
+    entProyectil.setVelocidad(4);
+    //se establece la posicion del proyectil
         
         //se agrega keylistener para poder detectar el teclado
         addKeyListener(this);
@@ -117,36 +128,35 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
     public void actualiza(){
         // instrucciones para actualizar Entidads
         
-        //se cambia la posicion de la nena dependiendo de su direccion
-        if(dirNena == 1) {
-            entBarra.setY(entBarra.getY()-entBarra.getVelocidad());
+        //se cambia la posicion de la barra dependiendo del booleano 'spacebar'
+        if (spacePress) {
+            entBarra.setX(entBarra.getX() + entBarra.getVelocidad());
         }
-        else if(dirNena == 2) {
-            entBarra.setY(entBarra.getY()+entBarra.getVelocidad());
+        else {
+            entBarra.setX(entBarra.getX() - entBarra.getVelocidad());
         }
-        else if(dirNena == 3) {
-            entBarra.setX(entBarra.getX()-entBarra.getVelocidad());
+
+        //dirProyectilY determina si el proyectil sube o baka
+       if (dirProyectilY) {
+            entProyectil.setY(entProyectil.getY() + entProyectil.getVelocidad());
         }
-        else if(dirNena == 4) {
-            entBarra.setX(entBarra.getX()+entBarra.getVelocidad());
+        else {
+            entProyectil.setY(entProyectil.getY() - entProyectil.getVelocidad());
+        } 
+
+        //dirProyectilX determina si el proyectil se mueve la derecha o izquierda
+       if (dirProyectilX) {
+            entProyectil.setY(entProyectil.getX() + entProyectil.getVelocidad());
         }
-        
-        //se mueve a cada caminador
-        for (Object encCaminador : encBloques) {
-                Entidad Caminador = (Entidad)encCaminador;
-                Caminador.setX(Caminador.getX()+Caminador.getVelocidad());
-        }
-        
-        //se mueve a cada corredor
-        for (Object encCorredor : encCorredores) {
-                Entidad Corredor = (Entidad)encCorredor;
-                Corredor.setY(Corredor.getY()+Corredor.getVelocidad()-iVidas+5); //mientras menos vidas, mas rapido
-        }
+        else {
+            entProyectil.setY(entProyectil.getX() - entProyectil.getVelocidad());
+        } 
+
     }
     
     public void run () {
         // se realiza el ciclo del juego en este caso nunca termina
-        while (iVidas>0) {//mientras no se haya perdido
+        while (true) {
             /* mientras dure el juego, se actualizan posiciones de jugadores
                se checa si hubo colisiones para desaparecer jugadores o corregir
                movimientos y se vuelve a pintar todo
@@ -168,7 +178,7 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
     public void checaColision(){
         // instrucciones para checar colision y reacomodar Entidads si 
         // es necesario
-        //la nena no se puede salir del cuadro
+        //la barra no se puede salir del cuadro
         if(entBarra.getX()+entBarra.getAncho()>getWidth()) {
             entBarra.setX(getWidth()-entBarra.getAncho());
         }
@@ -181,60 +191,41 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
         if(entBarra.getY() < 0) {
             entBarra.setY(0);
         }
+       
         
-        //si caminador choca con Nena se aumenta el score
-        for (Object encCaminador : encBloques) {
-                Entidad Caminador = (Entidad)encCaminador;
-                if(entBarra.colisiona(Caminador)) {
-                    iScore++;   //se aumenta el score
-                    //se reposiciona al caminador
-                    Caminador.setX((int) (Math.random() *(0 + 600) - 600)); 
-                    Caminador.setY((int) (Math.random() *(getHeight())));
-                    aucSonidoBloque.play();      //emite sonido
-                }
-                //se reposiciona al caminador cuando se sale del applet
-                else if(Caminador.getX()+Caminador.getAncho()>getWidth()) {
-                    Caminador.setX((int) (Math.random() *(0 + 600) - 600)); 
-                    Caminador.setY((int) (Math.random() *(getHeight())));
-                }
+        //no se puede salir el proyectil
+        //se cambia la direccion si se sale del margen
+        if (entProyectil.getX()<=0 || entProyectil.getX() + entProyectil.getAncho() > getWidth()) {
+            dirProyectilX != dirProyectilX;
         }
-        
-        //si corredor choca con Nena se disminuye las vidas
-        for (Object encCorredor : encCorredores) {
-                Entidad Corredor = (Entidad)encCorredor;
-                if(entBarra.colisiona(Corredor)) {
-                    iColisiones++;  //se aumenta el contador de colisiones
-                    if(iColisiones >=5) { //si llega a cinco colisiones, se disminuye una vida
-                        iVidas--;
-                        iColisiones = 0;    //se reinicia el contador
-                    }
-                    //se reposiciona al corredor
-                    Corredor.setX((int) (Math.random() *(getWidth()))); 
-                    Corredor.setY((int) (Math.random() *(0 + 1000) - 1000));
-                    aucSonidoSuelo.play();   //emite sonido
-                }
-                //se reposiciona al corredor cuando se sale del applet
-                else if(Corredor.getY()+Corredor.getAlto()>getHeight()) {
-                    Corredor.setX((int) (Math.random() *(getWidth()))); 
-                    Corredor.setY((int) (Math.random() *(0 + 1000) - 1000));
+
+        if (entProyectil.getY()<=0 || entProyectil.getY() + entProyectil.getAlto() > getHeight()) {
+            dirProyectilY != dirProyectilY;
+        }
+
+        //si Bloque choca con Nena se aumenta el score
+        for (Object encBloque : encBloques) {
+                Entidad Bloque = (Entidad)encBloque;
+                if(entProyectil.colisiona(Bloque)) {
+                    iScore++;   //se aumenta el score
+                    //se reposiciona al Bloque
+                    encBloques.remove(Bloque);   //se elimina el bloque con el que se colisiono                    
+                    aucSonidoBloque.play();      //emite sonido
                 }
         }
     }
     
     public void keyReleased(KeyEvent e) {
-        // si presiono flecha para arriba
-        if(e.getKeyCode() == KeyEvent.VK_W) {    
-                dirNena = 1;  // cambio la dirección arriba
+        // si se suelta spacebar, barra se mueve hacia al izquierda
+        if(e.getKeyCode() == KeyEvent.VK_SPACE) {    
+            spacePress = false;
         }
-        // si presiono flecha para abajo
-        else if(e.getKeyCode() == KeyEvent.VK_S) {    
-                dirNena = 2;   // cambio la direccion para abajo
-        }
-        else if(e.getKeyCode() == KeyEvent.VK_A) {    
-                dirNena = 3;   // cambio la direccion para izquierda
-        }
-        else if(e.getKeyCode() == KeyEvent.VK_D) {    
-                dirNena = 4;   // cambio la direccion para derecha
+    }
+
+    public void keyPressed(KeyEvent e) {
+        // si se presiona spacebar, barra se mueve hacia la derecha
+        if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+            spacePress = true;
         }
     }
     
@@ -271,27 +262,19 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
     
     
     public void paintAux(Graphics g) {
-        //se despliegan las vidas en la esquina superior izq
+        //se despliegan el score en la esquina superior izq
         g.setColor(Color.RED);
-        g.drawString("Vidas: "+ iVidas, 20, 20);
         g.drawString("Score: " + iScore, 20, 35);
-        if (entBarra != null && entBloque != null && perCorredor != null && iVidas >0) {
-                //Dibuja la imagen de la nena en la posicion actualizada
+        if (entBarra != null && entBloque != null) {
+                //Dibuja la imagen de la barra en la posicion actualizada
                 g.drawImage(entBarra.getImagen(), entBarra.getX(),
                         entBarra.getY(), this);
                 
-                //Dibuja los bloques en la posicion actualizada
-                for (Object encCaminador : encBloques) {
-                    Entidad Caminador = (Entidad)encCaminador;
-                    g.drawImage(Caminador.getImagen(), Caminador.getX(),
-                            Caminador.getY(), this);
-                }
-                
-                //Dibuja lso corredores en la posicion actualizada
-                for (Object encCorredor : encCorredores) {
-                    Entidad Corredor = (Entidad)encCorredor;
-                    g.drawImage(Corredor.getImagen(), Corredor.getX(),
-                            Corredor.getY(), this);
+                //Dibuja los bloques
+                for (Object encBloque : encBloques) {
+                    Entidad bloque = (Entidad)encBloque;
+                    g.drawImage(bloque.getImagen(), bloque.getX(),
+                            bloque.getY(), this);
                 }
         }
 
@@ -303,13 +286,6 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
     public void keyTyped(KeyEvent e) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-
-    @Override
-    public void keyPressed(KeyEvent e) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    
     
 }
 
