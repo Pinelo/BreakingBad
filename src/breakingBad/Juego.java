@@ -38,7 +38,7 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
     private int iScore;                 //score del juego
     private SoundClip aucSonidoBloque; //sonido de impacto con bloque
     private SoundClip aucSonidoSuelo;  //sonido de impacto con suelo
-    private Boolean spacePress;     //booleano indicativo de la tecla spacebar
+    private int dirBarra;     //booleano indicativo de la direccion de la barra
     private Boolean dirProyectilY;   //indica si el proyectil sube o baja
     private Boolean dirProyectilX;   //indica si el proyectil se mueve a la derecha o izq
 
@@ -59,8 +59,8 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
         dirProyectilX = true;
         dirProyectilY = true;
         
-        //la tecla spacebar no esta presionada
-        spacePress = false;
+        //la barra no se mueve al principio
+        dirBarra = 0;
 
         //se crea sonido de impacto con bloque
         aucSonidoBloque = new SoundClip("wooho.wav");
@@ -121,7 +121,7 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
     int posY = entBarra.getY();
     entProyectil = new Entidad(posX, posY, Toolkit.getDefaultToolkit().getImage(urlImagenProyectil));
     entProyectil.setY(entProyectil.getY() - entProyectil.getAlto());
-    entProyectil.setVelocidad(1);
+    entProyectil.setVelocidad(7);
     //se establece la posicion del proyectil
         
         //se agrega keylistener para poder detectar el teclado
@@ -141,10 +141,10 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
         // instrucciones para actualizar Entidads
         
         //se cambia la posicion de la barra dependiendo del booleano 'spacebar'
-        if (spacePress) {
+        if (dirBarra == 1) {
             entBarra.setX(entBarra.getX() + entBarra.getVelocidad());
         }
-        else {
+        else if(dirBarra == 2){
             entBarra.setX(entBarra.getX() - entBarra.getVelocidad());
         }
 
@@ -158,10 +158,10 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
 
         //dirProyectilX determina si el proyectil se mueve la derecha o izquierda
        if (dirProyectilX) {
-            entProyectil.setY(entProyectil.getX() + entProyectil.getVelocidad());
+            entProyectil.setX(entProyectil.getX() + entProyectil.getVelocidad());
         }
         else {
-            entProyectil.setY(entProyectil.getX() - entProyectil.getVelocidad());
+            entProyectil.setX(entProyectil.getX() - entProyectil.getVelocidad());
         } 
 
     }
@@ -216,31 +216,54 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
         }
 
         //si Bloque choca con Nena se aumenta el score
+        //Contador de tiempo para que no se registren dos choques al mismo tiempo
+        
         for (Object encBloque : encBloques) {
                 Entidad Bloque = (Entidad)encBloque;
                 if(entProyectil.colisiona(Bloque)) {
                     iScore++;   //se aumenta el score
                     //se reposiciona al Bloque
-                    //Bloque.setX(-400);
-                    dirProyectilX = !dirProyectilX;
-                    dirProyectilY = !dirProyectilY;
+                    Bloque.setX(-400);
+                    if(entProyectil.getY()<=entBloque.getY()+entBloque.getAlto() || 
+                                entProyectil.getY() + entProyectil.getAlto() >= Bloque.getY()) {
+                        dirProyectilY = !dirProyectilY;
+                    }
+                    else {
+                        dirProyectilX = !dirProyectilX;
+                    }
+                        
                     //encBloques.remove(Bloque);   //se elimina el bloque con el que se colisiono                    
                     aucSonidoBloque.play();      //emite sonido
                 }
+        }
+        
+        if(entBarra.colisiona(entProyectil)) {
+             if( entProyectil.getY() + entProyectil.getAlto() >= entBarra.getY()) {
+                dirProyectilY = !dirProyectilY;
+             }
+             else {
+                dirProyectilX = !dirProyectilX;
+             }
         }
     }
     
     public void keyReleased(KeyEvent e) {
         // si se suelta spacebar, barra se mueve hacia al izquierda
-        if(e.getKeyCode() == KeyEvent.VK_SPACE) {    
-            spacePress = false;
+        if(e.getKeyCode() == KeyEvent.VK_RIGHT) {    
+            dirBarra = 0;
+        }
+        else if(e.getKeyCode() == KeyEvent.VK_LEFT) {
+            dirBarra = 0;
         }
     }
 
     public void keyPressed(KeyEvent e) {
         // si se presiona spacebar, barra se mueve hacia la derecha
-        if (e.getKeyCode() == KeyEvent.VK_SPACE) {
-            spacePress = true;
+        if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
+            dirBarra = 1;
+        }
+        else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+            dirBarra = 2;
         }
     }
     
