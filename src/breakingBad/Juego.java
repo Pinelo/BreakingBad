@@ -43,7 +43,16 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
     private Boolean dirProyectilX;   //indica si el proyectil se mueve a la derecha o izq
     private int iChoque;       //prevenir que se registre mas de un choque al mismo tiempo
     private Boolean bPausa;     //juego se pausa cuando este boolean sea verdadero
-
+    private Animacion aniBloqueDestruido; //animacion que se corre cuando se destruye un bloque
+    //longs para medir el tiempo entre las imagenes de la animacion
+    private long tiempoActual;            
+    private long tiempoInicial;
+    //posicion donde se correra la animacion
+    private int aniPosX;
+    private int aniPosY;
+    private Boolean bBloqueDestruido; //se destruyo un bloque y esta pendiente correr la animacion
+    private int iContador;            //cuenta las imagenes despliegadas por la
+                                      //animacion para saber cuando acaba
     
      public Juego() {
         init();
@@ -58,8 +67,14 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
         //por defecto score empieza en 0
         iScore =0;
         
+        //no se ha corrido ninguna imagen de la animacion
+        iContador = 0;
+        
         //juego no esta pausado por defecto
         bPausa = false;
+        
+        //no se ha destruido ningun bloque
+        bBloqueDestruido = false;
         
         //proyectil empieza moviendose a la derecha y arriba
         dirProyectilX = true;
@@ -87,8 +102,23 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
         entBarra.setVelocidad(17);
         
         //
-        // se obtiene la imagen para los bloques    
+        // se obtiene las imagenes para los bloques    
         URL urlImagenBloque = this.getClass().getResource("bloque.png");
+        URL urlImagenBloque2 = this.getClass().getResource("bloque2.png");
+        URL urlImagenBloque3 = this.getClass().getResource("bloque3.png");
+        URL urlImagenBloque4 = this.getClass().getResource("bloque4.png");
+        URL urlImagenBloque5 = this.getClass().getResource("bloque5.png");
+
+        
+        aniBloqueDestruido = new Animacion();
+        aniBloqueDestruido.sumaCuadro(urlImagenBloque2, 100);
+        aniBloqueDestruido.sumaCuadro(urlImagenBloque3, 100);
+        aniBloqueDestruido.sumaCuadro(urlImagenBloque4, 100);
+        aniBloqueDestruido.sumaCuadro(urlImagenBloque5, 100);
+                   
+
+
+        
 
         // se crea el arreglo de bloques
         encBloques = new LinkedList();
@@ -146,6 +176,16 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
     public void actualiza(){
         // instrucciones para actualizar Entidads
         
+        
+        //Determina el tiempo que ha transcurrido desde que el Applet 
+        //inicio su ejecución
+        long tiempoTranscurrido=System.currentTimeMillis() - tiempoActual;
+        //Guarda el tiempo actual
+        tiempoActual += tiempoTranscurrido;
+        //Actualiza la animación en base al tiempo transcurrido
+        aniBloqueDestruido.actualiza(tiempoTranscurrido);
+        
+        
         //se cambia la posicion de la barra dependiendo del booleano 'spacebar'
         if (dirBarra == 1) {
             entBarra.setX(entBarra.getX() + entBarra.getVelocidad());
@@ -174,12 +214,17 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
     
     public void run () {
         // se realiza el ciclo del juego en este caso nunca termina
+        
+        
+        //Guarda el tiempo actual del sistema 
+        tiempoActual = System.currentTimeMillis();
+            
         while (true) {
             /* mientras dure el juego, se actualizan posiciones de jugadores
                se checa si hubo colisiones para desaparecer jugadores o corregir
                movimientos y se vuelve a pintar todo
             */ 
-            
+                   
             //actualiza no se corre cuando se pausa el juego
             if(!bPausa) {
                 actualiza();
@@ -235,6 +280,10 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
                 if(entProyectil.colisiona(Bloque) && iChoque >= 3) {
                     iChoque = 0;
                     iScore++;   //se aumenta el score
+                    //se correra la animacion en la posicion del bloque destruido
+                    aniPosX = Bloque.getX();
+                    aniPosY = Bloque.getY();
+                    iContador = 0;
                     
                     encBloques.remove(Bloque);
                     if(entProyectil.getY()<=entBloque.getY()+entBloque.getAlto() || 
@@ -340,7 +389,11 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
                 
                 g.drawImage(entProyectil.getImagen(), entProyectil.getX(),
                         entProyectil.getY(), this);
-                
+                //se corre la animacion si es verdadero el boolean
+                if(iContador < 3) {
+                    iContador++;
+                    g.drawImage(Toolkit.getDefaultToolkit().getImage(aniBloqueDestruido.getImagen()), aniPosX, aniPosY, this);
+                }
                 //Dibuja los bloques
                 for (Object encBloque : encBloques) {
                     Entidad bloque = (Entidad)encBloque;
