@@ -50,7 +50,7 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
      
     public void init() {
         // hago el applet de un tamaño 500,500
-        setSize(800, 600);
+        setSize(1200, 800);
         
         //por defecto score empieza en 0
         iScore =0;
@@ -70,7 +70,7 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
         
         
         // se crea imagen de la barra
-        URL urlImagenBarra = this.getClass().getResource("nena.gif");
+        URL urlImagenBarra = this.getClass().getResource("barra.png");
         // se crea la barra
 	entBarra = new Entidad(getWidth() / 2, getHeight(),
                 Toolkit.getDefaultToolkit().getImage(urlImagenBarra));
@@ -78,16 +78,18 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
         entBarra.setX(getWidth()/2-entBarra.getAncho());
 
          //velocidad de barra es 3
-        entBarra.setVelocidad(3);
+        entBarra.setVelocidad(17);
         
         //
         // se obtiene la imagen para los bloques    
-        URL urlImagenBloque = this.getClass().getResource("alien1Camina.gif");
+        URL urlImagenBloque = this.getClass().getResource("bloque.png");
 
         // se crea el arreglo de bloques
         encBloques = new LinkedList();
-        int cantbloques = 20;
-        while(cantbloques != 0) {
+        int cantbloques = 39;
+        int numFilas = 1; //contador de filas
+        int numColumna = 0; //contador de columnas
+        while(cantbloques >= 0) {
             cantbloques -=1;
             int posX = 1;    
             int posY = 1;
@@ -98,14 +100,22 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
                 PosX y PosY dependen del tama;o del sprite, 
                 esto va a cambiar despues.
             */
-            entBloque.setX(cantbloques*entBloque.getAncho());
-            entBloque.setY(0);
+            entBloque.setX(numColumna*entBloque.getAncho());
+            entBloque.setY(entBloque.getAlto()*numFilas);
+
+            if(numColumna >= 9) {
+                numColumna =0;
+                numFilas++;
+            }
+            else {
+                numColumna++;
+            }
             encBloques.add(entBloque);
         }
         //
         
         // se obtiene la imagen para el proyectil    
-        URL urlImagenProyectil = this.getClass().getResource("alien2Corre.gif");
+        URL urlImagenProyectil = this.getClass().getResource("proyectil.png");
     // se establece la posicion inicial, su velocidad y se crea el objeto
     int posX = entBarra.getX();
     int posY = entBarra.getY();
@@ -181,7 +191,7 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
         // instrucciones para checar colision y reacomodar Entidads si 
         // es necesario
         //la barra no se puede salir del cuadro
-        if(entBarra.getX()+entBarra.getAncho()>getWidth()) {
+        if(entBarra.getX()+entBarra.getAncho()>=getWidth()) {
             entBarra.setX(getWidth()-entBarra.getAncho());
         }
         else if(entBarra.getY()+entBarra.getAlto()>getHeight()) {
@@ -211,7 +221,7 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
                 if(entProyectil.colisiona(Bloque)) {
                     iScore++;   //se aumenta el score
                     //se reposiciona al Bloque
-                    Bloque.setX(-400);
+                    //Bloque.setX(-400);
                     dirProyectilX = !dirProyectilX;
                     dirProyectilY = !dirProyectilY;
                     //encBloques.remove(Bloque);   //se elimina el bloque con el que se colisiono                    
@@ -246,7 +256,7 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
         //crea imagen para el background
         URL urlImagenFondo;
         Image imaImagenFondo;
-        urlImagenFondo = this.getClass().getResource("espacio.jpg");
+        urlImagenFondo = this.getClass().getResource("fondo.png");
         imaImagenFondo = Toolkit.getDefaultToolkit().getImage(urlImagenFondo);
 
         //despliega la imagen
@@ -269,10 +279,13 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
         //se despliegan el score en la esquina superior izq
         g.setColor(Color.RED);
         g.drawString("Score: " + iScore, 20, 35);
-        if (entBarra != null && entBloque != null) {
+        if (entBarra != null && entBloque != null && entProyectil != null) {
                 //Dibuja la imagen de la barra en la posicion actualizada
                 g.drawImage(entBarra.getImagen(), entBarra.getX(),
                         entBarra.getY(), this);
+                
+                g.drawImage(entProyectil.getImagen(), entProyectil.getX(),
+                        entProyectil.getY(), this);
                 
                 //Dibuja los bloques
                 for (Object encBloque : encBloques) {
