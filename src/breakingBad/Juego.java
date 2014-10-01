@@ -41,6 +41,8 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
     private int dirBarra;     //booleano indicativo de la direccion de la barra
     private Boolean dirProyectilY;   //indica si el proyectil sube o baja
     private Boolean dirProyectilX;   //indica si el proyectil se mueve a la derecha o izq
+    private int iChoque;       //prevenir que se registre mas de un choque al mismo tiempo
+    private Boolean bPausa;     //juego se pausa cuando este boolean sea verdadero
 
     
      public Juego() {
@@ -52,8 +54,12 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
         // hago el applet de un tamaño 500,500
         setSize(1200, 800);
         
+        iChoque = 0; //el es cero por defecto
         //por defecto score empieza en 0
         iScore =0;
+        
+        //juego no esta pausado por defecto
+        bPausa = false;
         
         //proyectil empieza moviendose a la derecha y arriba
         dirProyectilX = true;
@@ -173,7 +179,12 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
                se checa si hubo colisiones para desaparecer jugadores o corregir
                movimientos y se vuelve a pintar todo
             */ 
-            actualiza();
+            
+            //actualiza no se corre cuando se pausa el juego
+            if(!bPausa) {
+                actualiza();
+            }
+            iChoque++;        //se incrementa el contador
             checaColision();
             repaint();
             try	{
@@ -213,17 +224,19 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
 
         if (entProyectil.getY()<=0 || entProyectil.getY() + entProyectil.getAlto() > getHeight()) {
             dirProyectilY = !dirProyectilY;
+            iChoque = 0;
         }
 
         //si Bloque choca con Nena se aumenta el score
         //Contador de tiempo para que no se registren dos choques al mismo tiempo
         
-        for (Object encBloque : encBloques) {
-                Entidad Bloque = (Entidad)encBloque;
-                if(entProyectil.colisiona(Bloque)) {
+        for (int i = 0; i < encBloques.size(); i++) {
+                Entidad Bloque = (Entidad)encBloques.get(i);
+                if(entProyectil.colisiona(Bloque) && iChoque >= 3) {
+                    iChoque = 0;
                     iScore++;   //se aumenta el score
-                    //se reposiciona al Bloque
-                    Bloque.setX(-400);
+                    
+                    encBloques.remove(Bloque);
                     if(entProyectil.getY()<=entBloque.getY()+entBloque.getAlto() || 
                                 entProyectil.getY() + entProyectil.getAlto() >= Bloque.getY()) {
                         dirProyectilY = !dirProyectilY;
@@ -237,7 +250,8 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
                 }
         }
         
-        if(entBarra.colisiona(entProyectil)) {
+        if(entBarra.colisiona(entProyectil) && iChoque >= 10) {
+            iChoque = 0;
              if( entProyectil.getY() + entProyectil.getAlto() >= entBarra.getY()) {
                 dirProyectilY = !dirProyectilY;
              }
@@ -265,6 +279,14 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
         else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
             dirBarra = 2;
         }
+        //si se acaba el juego, se reinicia al teclear 'n'
+        else if(e.getKeyCode() == KeyEvent.VK_N && encBloques.size() == 0){
+            init();
+        }
+        else if(e.getKeyCode() == KeyEvent.VK_P) {
+            bPausa = !bPausa;
+        
+        }
     }
     
     public void paint (Graphics graGrafico){
@@ -279,7 +301,16 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
         //crea imagen para el background
         URL urlImagenFondo;
         Image imaImagenFondo;
+        if(encBloques.size() > 0){
         urlImagenFondo = this.getClass().getResource("fondo.png");
+        }
+        else {
+        urlImagenFondo = this.getClass().getResource("game_over.jpg");
+        }
+        
+        
+        
+        
         imaImagenFondo = Toolkit.getDefaultToolkit().getImage(urlImagenFondo);
 
         //despliega la imagen
@@ -302,7 +333,7 @@ public final class Juego extends JFrame implements Runnable, KeyListener{
         //se despliegan el score en la esquina superior izq
         g.setColor(Color.RED);
         g.drawString("Score: " + iScore, 20, 35);
-        if (entBarra != null && entBloque != null && entProyectil != null) {
+        if (entBarra != null && entBloque != null && entProyectil != null && encBloques.size() > 0) {
                 //Dibuja la imagen de la barra en la posicion actualizada
                 g.drawImage(entBarra.getImagen(), entBarra.getX(),
                         entBarra.getY(), this);
